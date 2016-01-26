@@ -32,6 +32,18 @@
     <RootNamespace>CNTK</RootNamespace>
     <ProjectName>ActionsLib</ProjectName>
   </PropertyGroup>
+  <Choose>
+    <When Condition="'$(Configuration)|$(Platform)'=='Debug_CpuOnly|x64' Or '$(Configuration)|$(Platform)'=='Release_CpuOnly|x64'">
+      <PropertyGroup>
+        <UsesCuda>true</UsesCuda>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <UsesCuda>false</UsesCuda>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64' Or '$(Configuration)|$(Platform)'=='Debug_CpuOnly|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -63,10 +75,6 @@
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(IncludePath);$(CUDA_PATH)\include;</IncludePath>
-    <LibraryPath>$(LibraryPath);$(CUDA_PATH)\lib\$(Platform)</LibraryPath>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64' Or '$(Configuration)|$(Platform)'=='Release_CpuOnly|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>..\SequenceTrainingLib;..\SGDLib;..\ComputationNetworkLib;..\CNTK;..\Math;..\Common\Include;..\CNTK\BrainScript;C:\Program Files (x86)\Microsoft SDKs\MPI\Include;$(VCInstallDir)include;..\..\DataReader\HTKMLFReader;$(WindowsSDK_IncludePath)</IncludePath>
@@ -76,9 +84,9 @@
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      <IncludePath>$(IncludePath);$(CUDA_PATH)\include;</IncludePath>
-      <LibraryPath>$(LibraryPath);$(CUDA_PATH)\lib\$(Platform)</LibraryPath>
+  <PropertyGroup Condition="$(UsesCuda)">
+    <IncludePath>$(IncludePath);$(CUDA_PATH)\include;</IncludePath>
+    <LibraryPath>$(LibraryPath);$(CUDA_PATH)\lib\$(Platform)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64' Or '$(Configuration)|$(Platform)'=='Debug_CpuOnly|x64'">
     <ClCompile>
@@ -91,17 +99,17 @@
       <OpenMPSupport>true</OpenMPSupport>
       <TreatWarningAsError>true</TreatWarningAsError>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"c:\Program Files\NVIDIA Corporation\GDK\gdk_win7_amd64_release\nvml\include"</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="$(UsesCuda)">"c:\Program Files\NVIDIA Corporation\GDK\gdk_win7_amd64_release\nvml\include"</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Math.lib; kernel32.lib; user32.lib; shell32.lib; %(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"c:\Program Files\NVIDIA Corporation\GDK\gdk_win7_amd64_release\nvml\lib"</AdditionalLibraryDirectories>
-      <DelayLoadDLLs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Math.dll; nvml.dll; cudart64_70.dll</DelayLoadDLLs>
+      <AdditionalLibraryDirectories Condition="$(UsesCuda)">"c:\Program Files\NVIDIA Corporation\GDK\gdk_win7_amd64_release\nvml\lib"</AdditionalLibraryDirectories>
+      <DelayLoadDLLs Condition="$(UsesCuda)">Math.dll; nvml.dll; cudart64_70.dll</DelayLoadDLLs>
       <StackReserveSize>100000000</StackReserveSize>
     </Link>
-    <PostBuildEvent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PostBuildEvent Condition="$(UsesCuda)">
       <Command>if exist "%ProgramW6432%\NVIDIA Corporation\NVSMI" xcopy /I /D /Y "%ProgramW6432%\NVIDIA Corporation\NVSMI\nvml*.dll" $(TargetDir)</Command>
       <Message>Copying NVidia GDK extension DLL to target folder</Message>
     </PostBuildEvent>
@@ -121,7 +129,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_CpuOnly|x64'">
     <ClCompile>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug_CpuOnly|x64'">%(PreprocessorDefinitions);CPUONLY</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);CPUONLY</PreprocessorDefinitions>
     </ClCompile>
     <Link>
         <DelayLoadDLLs>Math.dll</DelayLoadDLLs>
@@ -140,7 +148,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalOptions>/d2Zi+ %(AdditionalOptions)</AdditionalOptions>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"c:\Program Files\NVIDIA Corporation\GDK\gdk_win7_amd64_release\nvml\include"</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="$(UsesCuda)">"c:\Program Files\NVIDIA Corporation\GDK\gdk_win7_amd64_release\nvml\include"</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,10 +157,10 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>Math.lib; kernel32.lib; user32.lib; shell32.lib; %(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
-      <DelayLoadDLLs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Math.dll; nvml.dll; cudart64_70.dll</DelayLoadDLLs>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"c:\Program Files\NVIDIA Corporation\GDK\gdk_win7_amd64_release\nvml\lib"</AdditionalLibraryDirectories>
+      <DelayLoadDLLs Condition="$(UsesCuda)">Math.dll; nvml.dll; cudart64_70.dll</DelayLoadDLLs>
+      <AdditionalLibraryDirectories Condition="$(UsesCuda)">"c:\Program Files\NVIDIA Corporation\GDK\gdk_win7_amd64_release\nvml\lib"</AdditionalLibraryDirectories>
     </Link>
-    <PostBuildEvent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PostBuildEvent Condition="$(UsesCuda)">
       <Command>if exist "%ProgramW6432%\NVIDIA Corporation\NVSMI" xcopy /I /D /Y "%ProgramW6432%\NVIDIA Corporation\NVSMI\nvml*.dll" $(TargetDir)</Command>
       <Message>Copying NVidia GDK extension DLL to target folder</Message>
     </PostBuildEvent>
@@ -174,15 +182,15 @@
       </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_CpuOnly|x64'">
-        <ClCompile>
-            <PreprocessorDefinitions>%(PreprocessorDefinitions);CPUONLY</PreprocessorDefinitions>
-        </ClCompile>
-        <Link>
-            <DelayLoadDLLs>Math.dll</DelayLoadDLLs>
-        </Link>
-    </ItemDefinitionGroup>
-    <ItemGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_CpuOnly|x64'">
+      <ClCompile>
+          <PreprocessorDefinitions>%(PreprocessorDefinitions);CPUONLY</PreprocessorDefinitions>
+      </ClCompile>
+      <Link>
+          <DelayLoadDLLs>Math.dll</DelayLoadDLLs>
+      </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
     <ClInclude Include="..\Common\CrossProcessMutex.h" />
     <ClInclude Include="..\Common\Include\Basics.h" />
     <ClInclude Include="..\Common\Include\BestGpu.h" />
